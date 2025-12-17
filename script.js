@@ -199,6 +199,12 @@ function animateFirefly(fireflyId, sectionSelector) {
   const firefly = document.getElementById(fireflyId);
   const section = document.querySelector(sectionSelector);
 
+  // null 체크 추가
+  if (!firefly || !section) {
+    console.warn(`⚠️ ${fireflyId} 또는 ${sectionSelector}를 찾을 수 없습니다.`);
+    return;
+  }
+
   function moveFirefly() {
     const sectionRect = section.getBoundingClientRect();
     const sectionWidth = sectionRect.width;
@@ -277,6 +283,13 @@ function animateFirefly(fireflyId, sectionSelector) {
 function animateDarkFirefly(fireflyId, sectionSelector) {
   const firefly = document.getElementById(fireflyId);
   const section = document.querySelector(sectionSelector);
+
+  // null 체크 추가
+  if (!firefly || !section) {
+    console.warn(`⚠️ ${fireflyId} 또는 ${sectionSelector}를 찾을 수 없습니다.`);
+    return;
+  }
+
   let currentX = 0;
   let currentY = 0;
   let targetX = 0;
@@ -361,6 +374,11 @@ function animateDarkFirefly(fireflyId, sectionSelector) {
 
   // Cursor detection and flee logic
   function checkCursorProximity() {
+    // null 체크 추가
+    if (!firefly || !section) {
+      return;
+    }
+
     const fireflyRect = firefly.getBoundingClientRect();
     const sectionRect = section.getBoundingClientRect();
 
@@ -392,18 +410,17 @@ function animateDarkFirefly(fireflyId, sectionSelector) {
 
 // Initialize fireflies
 function initFireflies() {
-  const fireflyIds = ["firefly1", "firefly2", "firefly3", "firefly4", "firefly5"];
-  const darkFireflyIds = ["firefly-dark1", "firefly-dark2", "firefly-dark3", "firefly-dark4", "firefly-dark5"];
+  const fireflyIds = [
+    "firefly1",
+    "firefly2",
+    "firefly3",
+    "firefly4",
+    "firefly5",
+  ];
 
   fireflyIds.forEach((id, index) => {
     setTimeout(() => {
       animateFirefly(id, ".storyboard-section");
-    }, index * 2000);
-  });
-
-  darkFireflyIds.forEach((id, index) => {
-    setTimeout(() => {
-      animateDarkFirefly(id, ".commentary-section");
     }, index * 2000);
   });
 }
@@ -413,6 +430,12 @@ function setupVideoControls() {
   const videoWrapper = document.getElementById("videoWrapper");
   const video = document.getElementById("projectVideo");
   const overlay = document.getElementById("videoOverlay");
+
+  // null 체크 추가
+  if (!video || !overlay || !videoWrapper) {
+    console.warn("⚠️ 비디오 요소를 찾을 수 없습니다.");
+    return;
+  }
 
   video
     .play()
