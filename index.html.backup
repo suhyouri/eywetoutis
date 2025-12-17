@@ -1,0 +1,2920 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Eγω et Oὔtis 나와 아무것도 아닌자</title>
+
+    <!-- MediaPipe Face Mesh -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      @font-face {
+        font-family: "Avara";
+        src: url("/font/Avara-Bold.woff2") format("woff2"),
+          url("/font/Avara-Bold.woff") format("woff");
+        font-weight: bold;
+        font-style: normal;
+        font-display: swap; /* 추가: 폰트 로딩 중에도 텍스트 표시 */
+      }
+
+      @font-face {
+        font-family: "OnulKangsan";
+        src: url("/font/OnulKangsan-Regular.otf") format("opentype"),
+          url("/font/OnulKangsan-Regular.woff") format("woff"),
+          url("/font/OnulKangsan-Regular.woff2") format("woff2");
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap; /* 추가 */
+      }
+
+      @font-face {
+        font-family: "OnulSamhwagothic";
+        src: url("/font/OnulSamhwagothic-Regular.otf") format("opentype");
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap; /* 추가 */
+      }
+
+      .nanum-myeongjo-regular {
+        font-family: "Nanum Myeongjo", serif;
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      body {
+        font-family: "Nanum Myeongjo", serif;
+        line-height: 1.6;
+        color: #000;
+        background: #fff;
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      /* 웹캠 비디오 (숨김) */
+      #webcam {
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+      }
+
+      /* 로딩 오버레이 */
+      #loadingOverlay {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 15px 20px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 9999;
+        transition: opacity 0.5s;
+      }
+
+      /* 첫 번째 섹션 - 풀스크린 이미지 */
+      .hero-section {
+        width: 100%;
+        height: 100vh;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.4;
+        z-index: 0;
+      }
+
+      .hero-content {
+        text-align: center;
+        color: #fff;
+        position: relative;
+        z-index: 1;
+        padding: 20px;
+      }
+
+      .hero-content h1 {
+        font-size: 10rem;
+        font-family: "Avara", Arial, sans-serif;
+        /* margin-bottom: 1rem; */
+        font-weight: 300;
+      }
+
+      .hero-content p {
+        font-size: 1.5rem;
+        font-weight: 300;
+      }
+
+      .hero-content .subtitle-kr {
+        font-family: "OnulKangsan", sans-serif;
+        font-size: 4rem;
+        font-weight: normal;
+      }
+
+      .hero-content .year {
+        font-family: "OnulKangsan", sans-serif;
+        font-size: 3rem;
+        font-weight: normal;
+      }
+
+      /* 기획의도 섹션 */
+      .planning-section {
+        min-height: 100vh;
+        padding: 100px 50px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" style="font-size: 24px;"><text y="24">🕯️</text></svg>')
+            16 16,
+          auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* 검은색 오버레이 (전체를 덮음) */
+      /* planning-section의 ::before (검은 오버레이) 수정 */
+      .planning-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle 200px at var(--cursor-x, 50%) var(--cursor-y, 50%),
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0.3) 40%,
+          rgba(0, 0, 0, 0.7) 60%,
+          rgba(0, 0, 0, 0.95) 80%,
+          rgba(0, 0, 0, 1) 100%
+        );
+        pointer-events: none;
+        z-index: 10;
+        opacity: 1;
+        filter: blur(30px);
+      }
+
+      /* 글로우 효과 */
+      .planning-section::after {
+        content: "";
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: transparent;
+        pointer-events: none;
+        z-index: 11;
+        transform: translate(-50%, -50%);
+        left: var(--cursor-x, 50%);
+        top: var(--cursor-y, 50%);
+        opacity: 0;
+        filter: blur(20px);
+      }
+
+      .planning-content {
+        max-width: 1000px;
+        width: 100%;
+        font-family: "OnulSamhwagothic", sans-serif;
+        position: relative;
+        z-index: 5;
+      }
+
+      /* 반딧불이 효과 */
+      .firefly {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 1) 0%,
+          rgba(255, 255, 255, 0.8) 30%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 20;
+        animation: firefly-float 15s infinite ease-in-out;
+        opacity: 0;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.6),
+          0 0 20px rgba(255, 255, 255, 0.4), 0 0 30px rgba(255, 255, 255, 0.2);
+      }
+
+      @keyframes firefly-float {
+        0% {
+          transform: translate(0, 0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translate(calc(100vw - 100px), calc(100vh - 100px));
+          opacity: 0;
+        }
+      }
+
+      @keyframes firefly-glow {
+        0%,
+        100% {
+          opacity: 0.6;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.3);
+        }
+      }
+
+      .firefly::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: inherit;
+        border-radius: 50%;
+        animation: firefly-glow 2s infinite ease-in-out;
+      }
+
+      .planning-content span {
+        font-family: "Avara", Arial, sans-serif;
+      }
+
+      .planning-content h2 {
+        font-size: 3rem;
+        margin-bottom: 2rem;
+        color: #fff;
+        font-weight: 300;
+      }
+
+      .planning-content p {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        font-weight: 300;
+      }
+
+      /* 영상 섹션 */
+      .video-section {
+        min-height: 100vh;
+        padding: 100px 50px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .video-container {
+        max-width: 1200px;
+        width: 100%;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .video-container h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        color: #fff;
+        text-align: center;
+        font-weight: 300;
+        font-family: "Avara", Arial, sans-serif;
+      }
+
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%;
+        background: #000;
+        overflow: hidden;
+      }
+
+      .video-wrapper video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
+      .video-overlay.hidden {
+        opacity: 0;
+      }
+
+      .play-icon {
+        width: 60px;
+        height: 60px;
+        border: 2px solid #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #fff;
+      }
+
+      /* 스토리보드 섹션 */
+      .storyboard-section {
+        font-family: "OnulSamhwagothic";
+        padding: 100px 50px;
+        background: #000;
+        position: relative;
+      }
+
+      .storyboard-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 3rem;
+        color: #fff;
+        text-align: left;
+        font-weight: 300;
+      }
+
+      .storyboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .storyboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #000;
+        min-width: 800px;
+      }
+
+      .storyboard-table th,
+      .storyboard-table td {
+        border: 1px solid #fff;
+        padding: 15px;
+        text-align: center;
+        min-width: 200px;
+        color: #fff;
+      }
+
+      .storyboard-table th:first-child,
+      .storyboard-table td:first-child {
+        min-width: 40px;
+        width: 40px;
+      }
+
+      .storyboard-table th {
+        background: #000;
+        color: #fff;
+        font-weight: 400;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .storyboard-table td {
+        background: #000;
+        height: 150px;
+        vertical-align: top;
+        font-weight: 300;
+      }
+
+      .storyboard-table tr:nth-child(even) td {
+        background: #000;
+      }
+
+      .storyboard-table tr:hover td {
+        background: #111;
+      }
+
+      .storyboard-table img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      /* 푸터 섹션 */
+      .footer-section {
+        font-family: "OnulKangsan";
+        padding: 50px;
+        background: #000;
+        text-align: center;
+        position: relative;
+      }
+
+      .footer-section p {
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 300;
+        margin: 0;
+      }
+
+      /* 모바일 반응형 (768px 이하) */
+      @media (max-width: 768px) {
+        #loadingOverlay {
+          top: 10px;
+          right: 10px;
+          padding: 10px 15px;
+          font-size: 12px;
+        }
+
+        .hero-content h1 {
+          font-size: 3.5rem;
+        }
+
+        .hero-content .subtitle-kr {
+          font-size: 2rem;
+        }
+
+        .hero-content .year {
+          font-size: 1.2rem;
+        }
+
+        .hero-content p {
+          font-size: 1rem;
+        }
+
+        .planning-section {
+          padding: 60px 80px;
+        }
+
+        .planning-section::before {
+          background: radial-gradient(
+            circle 200px at var(--cursor-x, 50%) var(--cursor-y, 50%),
+            /* 200px → 120px */ rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.5) 30%,
+            /* 더 빨리 어두워짐 */ rgba(0, 0, 0, 0.9) 50%,
+            rgba(0, 0, 0, 1) 70% /* 80% → 70%로 더 빨리 완전 검은색 */
+          );
+          filter: blur(0px); /* blur를 줄여서 경계를 더 선명하게 */
+        }
+
+        .planning-content h2 {
+          font-size: 2rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .planning-content p {
+          font-size: 1rem;
+          line-height: 1.7;
+          margin-bottom: 1.2rem;
+        }
+
+        .planning-content p[style*="padding-left"] {
+          padding-left: 15px !important;
+          font-size: 0.95rem !important;
+        }
+
+        .video-section {
+          padding: 60px 20px;
+        }
+
+        .video-container h2 {
+          font-size: 1.8rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .play-icon {
+          width: 50px;
+          height: 50px;
+          font-size: 1.2rem;
+        }
+
+        .storyboard-section {
+          padding: 60px 20px;
+        }
+
+        .storyboard-section h2 {
+          font-size: 1.8rem;
+          margin-bottom: 2rem;
+        }
+
+        .storyboard-container {
+          margin: 0 -20px;
+          padding: 0 20px;
+        }
+
+        .storyboard-table {
+          min-width: 600px;
+        }
+
+        .storyboard-table th,
+        .storyboard-table td {
+          min-width: 120px;
+          padding: 10px 8px;
+          font-size: 0.9rem;
+        }
+
+        .storyboard-table td {
+          height: 120px;
+        }
+
+        .storyboard-table img {
+          width: 4rem !important;
+          height: 6rem !important;
+          transform: scale(1.5) !important;
+        }
+
+        .footer-section {
+          padding: 30px 20px;
+        }
+
+        .footer-section p {
+          font-size: 1rem;
+        }
+      }
+
+      /* 작은 모바일 (480px 이하) */
+      @media (max-width: 480px) {
+        .hero-content h1 {
+          font-size: 2.5rem;
+        }
+
+        .hero-content .subtitle-kr {
+          font-size: 1.5rem;
+        }
+
+        .hero-content .year {
+          font-size: 1rem;
+        }
+
+        .planning-section {
+          padding: 50px 35px;
+        }
+
+        .planning-section::before {
+          background: radial-gradient(
+            circle 200px at var(--cursor-x, 50%) var(--cursor-y, 50%),
+            /* 더 작게 */ rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.6) 25%,
+            rgba(0, 0, 0, 0.95) 45%,
+            rgba(0, 0, 0, 1) 65%
+          );
+          /* filter: blur(0px); */
+        }
+
+        .planning-content h2 {
+          font-size: 1.5rem;
+        }
+
+        .planning-content p {
+          font-size: 0.9rem;
+          line-height: 1.6;
+        }
+
+        .video-section {
+          padding: 50px 15px;
+        }
+
+        .video-container h2 {
+          font-size: 1.5rem;
+        }
+
+        .storyboard-section {
+          padding: 50px 15px;
+        }
+
+        .storyboard-section h2 {
+          font-size: 1.5rem;
+        }
+
+        .storyboard-table {
+          min-width: 500px;
+        }
+
+        .storyboard-table th,
+        .storyboard-table td {
+          min-width: 100px;
+          padding: 8px 5px;
+          font-size: 0.85rem;
+        }
+
+        .storyboard-table img {
+          width: 3rem !important;
+          height: 5rem !important;
+          transform: scale(1.3) !important;
+        }
+
+        .footer-section p {
+          font-size: 0.9rem;
+        }
+      }
+
+      /* 랜드스케이프 모드 조정 */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .hero-content h1 {
+          font-size: 3rem;
+        }
+
+        .hero-content .subtitle-kr {
+          font-size: 1.5rem;
+        }
+
+        .planning-section,
+        .video-section,
+        .storyboard-section {
+          padding: 40px 20px;
+        }
+      }
+
+      /* 작업노트 섹션 - 눈알 커서 */
+      .commentary-section {
+        min-height: 100vh;
+        padding: 100px 50px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" style="font-size: 24px;"><text y="24">👁️</text></svg>')
+            16 16,
+          auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* 어두운 반딧불이 (텍스트를 가리는 검은 원) */
+      .firefly-dark {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 1) 0%,
+          /* 중심 하얀 동그라미 */ rgba(255, 255, 255, 0.8) 3%,
+          /* 하얀 빛 */ rgba(0, 0, 0, 1) 8%,
+          /* 바로 검은색으로 */ rgba(0, 0, 0, 1) 50%,
+          /* 진한 검은색 유지 */ rgba(0, 0, 0, 0.95) 70%,
+          /* 여전히 매우 어두움 */ rgba(0, 0, 0, 0.7) 85%,
+          /* 조금씩 흐려짐 */ transparent 100%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0;
+        filter: blur(25px);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3),
+          0 0 40px rgba(0, 0, 0, 0.9);
+        transition: transform 0.3s ease-out; /* 부드러운 도망 움직임 */
+      }
+
+      /* 반딧불이의 하얀 중심 강조 */
+      .firefly-dark::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 1) 0%,
+          rgba(255, 255, 255, 0.6) 50%,
+          transparent 100%
+        );
+        border-radius: 50%;
+        animation: firefly-dark-glow 2s infinite ease-in-out;
+      }
+
+      @keyframes firefly-dark-glow {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.5);
+        }
+      }
+      /* 모바일 반응형 */
+      @media (max-width: 768px) {
+        .commentary-section {
+          padding: 60px 80px;
+          cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" style="font-size: 20px;"><text y="20">👁️</text></svg>')
+              14 14,
+            auto;
+        }
+
+        .firefly-dark {
+          width: 180px;
+          height: 180px;
+          filter: blur(20px);
+        }
+
+        .firefly-dark::after {
+          width: 8px;
+          height: 8px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .commentary-section {
+          padding: 50px 35px;
+          cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" style="font-size: 18px;"><text y="18">👁️</text></svg>')
+              12 12,
+            auto;
+        }
+
+        .firefly-dark {
+          width: 150px;
+          height: 150px;
+          filter: blur(15px);
+        }
+        .firefly-dark::after {
+          width: 6px;
+          height: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 웹캠 비디오 (숨김) -->
+    <video id="webcam" autoplay playsinline></video>
+
+    <!-- 로딩 오버레이 -->
+    <div id="loadingOverlay">👁️ 웹캠 초기화 중...</div>
+
+    <!-- 첫 번째 섹션: 풀스크린 이미지 -->
+    <section class="hero-section" id="heroSection">
+      <div class="hero-content">
+        <p class="year">2025</p>
+        <h1>Eyw et Oὔtis</h1>
+        <p class="subtitle-kr">나와 아무것도 아닌자</p>
+      </div>
+    </section>
+
+    <!-- 두 번째 섹션: 기획의도 -->
+    <section class="planning-section">
+      <div class="planning-content">
+        <h2>기획의도</h2>
+        <p>
+          『<span>Eyw et Outis</span>(나와 아무것도 아닌 자)』는 밴쿠버 기반
+          여성 4인조 사이키델릭 록밴드 FRANKIIE의 2019년 발매된 ≪Forget Your
+          Head≫ 앨범의 두 번째 곡 〈Dream Reader〉의 첫 가사 '눈이 보이지 않는
+          꿈을 꾸었다'로 이야기를 시작합니다.
+        </p>
+        <p>
+          프로이트는 "꿈은 무의식의 통로"라고 말합니다. 무의식은 나에게도 미지인
+          해석되지 않는 몸을 만나게 합니다. 『<span>Eyw et Outis</span>』는
+          '어둠이 보여주는 것'과 '어둠이 보게 하는 것'에 천착하면서 떠올린
+          이미지들을 배열했습니다. 이미 본 적 있는 장면을 재현하거나, 한 번쯤
+          보고싶어 상상했던 이미지들이 혼재해 있습니다.
+        </p>
+        <p>
+          <span>Outis</span>는 호메로스의 『오디세이아(The Odyssey)』에서
+          등장하는 이름입니다. 주인공 오디세우스가 식인 거인(키클롭스)에게
+          잡혔을 때, 자신의 이름을 "<span>Outis</span>(nobody)"라고 거짓말을
+          합니다. 나중에 오디세우스가 거인의 눈을 찌르고 도망갈 때, 거인이
+          동료들에게 "누가 나를 공격했다!"라고 소리치는데, 이름이
+          '<span>Outis</span>(nobody)'였기 때문에 "아무도 나를 공격하지 않았어!
+          (Nobody is attacking me!)"라고 말하게 되어 동료들의 도움을 받지
+          못합니다. 여기서 '<span>Outis</span>(Nobody)'는 지혜로운 은폐, 익명성,
+          혹은 존재하지만 존재하지 않는 상태를 상징합니다.
+        </p>
+        <p
+          style="
+            padding-left: 30px;
+            border-left: 2px solid #fff;
+            font-style: italic;
+            margin: 2rem 0;
+            color: #fff;
+          "
+        >
+          나. 그것은 진정 그 누구도 아니다. 그것은 무명씨이다. (..) 명명된 나,
+          나라고 명명된 자, 이것은 하나의 객체이다. 최초의 나, 상술된 바가 바로
+          그 최초의 객관화가 되고 있는 나, 이 나는 모든 것이 보라고 또는
+          생각하라고 주어진 미지의 사람, 모든 것이 호소해 오며, (눈) 앞에
+          (~하는) 어떤 것이 있는 미지의 사람이다. 그러니까 결국 나, 그것은
+          부정성이다. 물론 그 자체로는 포착할 수 없는 것이다. 아무것도 아닌
+          것이므로. 그러면 그것이 사유하고 추론하며 말하고 논의하며 고통을
+          느끼고 즐기는 등을 하는 당사자인가? 분명 아니다. 왜냐하면 그것은
+          아무것도 아니니까 ㅡ 사유하고 지각하고 등을 하는 자, 이것은 신체를
+          통한 세계에의 열림인 것으로서의 이 부정성이다 ㅡ 우리는 반성적이라는
+          성질을 신체에 의해 이해해야 하며, 신체의, 말의, 자기와의 관계에 의해
+          이해해야 한다.
+        </p>
+        <p
+          style="
+            text-align: right;
+            font-style: italic;
+            margin-top: -1rem;
+            color: #fff;
+          "
+        >
+          - 모리스 메를로 퐁티 &lt;보이는 것과 보이지 않는 것&gt;, 1960년 4월,
+          <br />
+          <span>Eyw et Outis</span>(나와 아무도 아닌 자)에서 발췌
+        </p>
+        <p>
+          『<span>Eyw et Outis</span>(나와 아무것도 아닌 자)』는 이러한 존재론적
+          물음을 매체적으로 실험합니다. 프롬프트를 입력하는 순간, 나는 창작의
+          주체이면서 동시에 알고리즘이라는 타자에게 의존하는 존재가 됩니다.
+          생성된 이미지들은 내가 의도한 것이면서 동시에 예측할 수 없는 낯선
+          것들입니다. 통제와 우연, 의도와 미끄러짐 사이에서 만들어지는 이
+          이미지들은 '있기도 하고 없기도 한' 몸들을 드러냅니다. 텍스트로 시작해,
+          스토리보드로 그려낸 그림이 프롬프트 텍스트로 환원되어 다시금
+          '사진'이라는 이미지로 수렴합니다. 이미지 선정 과정에서 하나의 상징으로
+          귀결되지 않는 모호한 이미지를 선별했습니다.
+        </p>
+        <p>
+          『<span>Eyw et Outis</span>(나와 아무것도 아닌 자)』의 이미지들은
+          <span>Eyw</span>(나)와 <span>Outis</span>(nobody) 사이 어디쯤
+          와있을까요. 있기도 없기도 한 몸들을 바라보며 생겨나는 정동(affect)은
+          무엇이 되는 걸까요.
+        </p>
+      </div>
+    </section>
+
+    <!-- 세 번째 섹션: 영상 (호버하면 재생) -->
+    <section class="video-section">
+      <div class="video-container">
+        <h2>
+          <a
+            href="https://vimeo.com/1145283789"
+            style="text-decoration: none; color: white"
+            >Eyw et Outis</a
+          >
+        </h2>
+        <div class="video-wrapper" id="videoWrapper">
+          <video id="projectVideo" loop muted autoplay playsinline>
+            <source src="video/01_notitle_small.mp4" type="video/mp4" />
+            브라우저가 비디오를 지원하지 않습니다.
+          </video>
+          <div class="video-overlay" id="videoOverlay">
+            <div class="play-icon">▶</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 네 번째 섹션: 작업노트 -->
+    <section class="commentary-section planning-section">
+      <div class="planning-content">
+        <h2>작업노트</h2>
+        <p>
+          눈에서 길을 찾을 수 있을거라 생각하던 때가 있었다. 하나의 이미지들을
+          산출할 때마다 내가 왜 이 이미지들(의 배열)을 보고 싶어했는지 생각했다.
+          그림을 텍스트로 변환하고 다시 프롬프트가 다시 이미지로 변하는 과정에서
+          내가 보고 싶었던 것과 의도하지 않은 것의 사이를 바라보았다. 눈을 오래
+          들여다보고 있으면 길을 잃었다. 진짜 같기도 가짜 같기도 한 경계에서
+          잡히지 않는 감정을 잡으려 애썼다. 당시 나는 스스로를 바라보는 시선에서
+          벗어나고 싶기도 했었다. 끈질기게 따라붙는 시선은 숨어도 숨어도 끝내
+          틈으로 들어서곤 했다. 종종 내 몸은 아주 순간만 존재하는 듯 했다. 다른
+          것과 접촉하는 순간만. 이미지에서는 그것이 잘린 신체로 보이겠지만
+          실제로는 그것이 유일하게 존재하는 신체였다. 이 이미지들은 끊임없이
+          탈출구를 찾아헤맸던 기록이기도하고 동시에 몸이 닿을 세계를 찾기위해
+          유랑하는 유령의 이야기이기도 하다.
+        </p>
+        <p>
+          몇 년 전에 그린 이 스토리보드를 실제로 볼 수 있다 생각하니 신이 나기도
+          했다. 그런데 '실제'란 무엇인가? 그림은 실제가 아닌가? 가끔 무언가를
+          너무 가까이 보다보면 그것들이 독립된 무언가로 전체와는 상관없는
+          부분만의 세계가 된다. 그리고 다시 그 부분은 뿌리처럼 자라나 연상되는
+          새로운 세계를 투사하고 투영한다. 이미지 스타일은 마리오 자코멜리<span
+            >Mario Giacomelli</span
+          >의 검은 수도복을 입고 눈 싸움을 하는 젊은 사제들을 찍은 '나에게는
+          얼굴을 쓰다듬을 손이 없다(<span
+            >Io non ho mani che mi accarezzino il volto</span
+          >)'를 참고 했다. 노는 사제들의 검은 제복과 하얀 눈의 이미지는
+          아름답다. 하지만, 흑백이 명확한 이미지는 때로 한쪽으로 넘어가면 다른
+          한쪽이 사라질 것만 같은 스산한 공포가 있다.
+        </p>
+        <p>
+          실재하지 않는 이미지에서 느껴지는 정동은 사실 이전 스크린 기반예술에서
+          만들어온 가상성과 다르지 않다. 여기에 존재하지 않는 것을 이미지로 지금
+          여기에 소환한다는 점에서. 하지만 정말 없었는가 하면, 과거의 데이터들이
+          그 이미지들을 있게 하며, 있을 것이라 추측한다. 이번 작업을 진행하면서
+          인공지능 영상모델이 만드는 시적언어의 가능성을 엿보았다. 현실에
+          존재하지 않지만 감각적으로 존재한다고 느낀 것과 이미 도래한 것을
+          시각화할 수 있다는 점에서.
+        </p>
+        <p
+          style="
+            padding-left: 30px;
+            border-left: 2px solid #fff;
+            font-style: italic;
+            margin: 2rem 0;
+            color: #fff;
+          "
+        >
+          "Perché? Ogni ruota diversa che gira cerca il significato della vita.
+          Io cerco la speranza nella sofferenza e metto le mani dove prima c'era
+          la bocca. Anche nel buio non so. Il dolore delle persone è così grande
+          che per contemplare tutto questo mondo ci vuole tempo
+          insufficiente."<br /><br />
+          "왜? <br />각기 다른 도로를 굴리가는 바퀴들 <br />모두 삶의 의미를
+          찾고 있다. 나는 고통 속에서 희망을 구하고 <br />기쁨인 줄 알았던 것은
+          입 안에 쓴맛을 남긴다. <br />거기에 삶이 있을지도 모른다.
+          <br />사람들의 고통이 너무나 커서 <br />그 모두를 경험하기에는 이
+          세상의 생애로도 시간이 부족한 그곳에."
+        </p>
+        <p
+          style="
+            text-align: right;
+            font-style: italic;
+            margin-top: -1rem;
+            color: #fff;
+          "
+        >
+          — 마리오 자코멜리 (<span>Mario Giacomelli</span>)
+        </p>
+      </div>
+    </section>
+
+    <!-- 다섯 번째 섹션: 스토리보드 테이블 -->
+    <section class="storyboard-section">
+      <!-- 반딧불이 5마리 -->
+      <div class="firefly" id="firefly1"></div>
+      <div class="firefly" id="firefly2"></div>
+      <div class="firefly" id="firefly3"></div>
+      <div class="firefly" id="firefly4"></div>
+      <div class="firefly" id="firefly5"></div>
+
+      <h2>스토리보드</h2>
+      <div class="storyboard-container">
+        <table class="storyboard-table">
+          <thead>
+            <tr>
+              <th>씬 번호</th>
+              <th>스토리보드</th>
+              <th>프롬프트</th>
+              <th>산출이미지</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>
+                <img
+                  src="./images/thumb/_0.png"
+                  alt="scene 1"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />제목
+              </td>
+              <td>
+                underwater perspective looking up at ocean surface at night,
+                view from below water, moonlight penetrating through water
+                surface, light rays filtering down, rippling water surface from
+                underneath, serene meditative ultra quiet, Mario Giacomelli
+                style black and white photography, high contrast, heavy
+                crosshatching texture, rough grain structure, stark dramatic
+                shadows, grainy film aesthetic, abstract composition, caustic
+                light patterns, deep blacks and bright whites, textured surface,
+                cinematic underwater shot
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_0.png"
+                  alt="scene 1"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>
+                <img
+                  src="./images/thumb/_1.png"
+                  alt="scene 2"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                />
+                <br />
+                시선
+              </td>
+              <td>
+                A black and white documentary-style photograph. Deep depth of
+                field. A narrow alley or interior room scene. The composition is
+                divided with a wall or corner occupying the right 20% of the
+                frame. A streetlight in the background casts natural urban
+                lighting. Behind the wall's edge, a figure appears with their
+                head tilted 90 degrees horizontally, as if lying sideways. Long
+                hair hangs down naturally following gravity. Only half of the
+                head peeks out from behind the wall's edge - the face is
+                completely black, invisible due to the harsh backlight from the
+                streetlight, a pure dark silhouette with no facial features
+                visible. The body is completely hidden behind the wall. The
+                blackened face is positioned to stare directly at the camera.
+                Strong contrast between the pitch-black silhouette and the
+                streetlight glow behind. Stark black and white tones.
+                Documentary realism, grainy film texture, high contrast, deep
+                focus. Urban night photography. Cold, unsettling atmosphere of a
+                real city alley.
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_1.png"
+                  alt="scene 2"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>
+                <img
+                  src="./images/thumb/_2.png"
+                  alt="scene 3"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                머리카락
+              </td>
+              <td>
+                A black and white documentary-style photograph. Deep depth of
+                field. A field of tall reeds standing motionless, all in dark
+                silhouette against bright backlight. A solitary human figure
+                stands among the reeds - completely black silhouette, gender
+                indistinguishable, no features visible. The figure is staring
+                toward the camera. Everything appears as stark black shapes
+                against harsh backlight - the reeds, the person, all reduced to
+                pure silhouettes. No fantasy elements, no flowing hair, no
+                movement. Just a static, haunting scene of dark forms against
+                bright light. High contrast black and white photography,
+                documentary realism, grainy film texture, deep focus throughout
+                the entire frame. Cold, unsettling atmosphere captured in a
+                single frozen moment. night moonlight
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_2.png"
+                  alt="scene 3"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>
+                <img
+                  src="./images/thumb/_3.png"
+                  alt="scene 4"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                틈
+              </td>
+              <td>
+                A black and white documentary-style photograph. Deep depth of
+                field. A closed mint-colored Korean-style door viewed straight
+                on. The room interior is pitch black with lights off. At the
+                bottom of the door, there is a small gap between the door and
+                the floor. Just a few strands of long black hair - barely
+                visible, just slightly protruding through the narrow gap from
+                the dark room into the lit side where the viewer stands. Very
+                minimal amount of hair, subtle and disturbing. Beyond the dark
+                room where the unknown person stands, there is light, so bright
+                light is seeping through the gap under the door, creating a
+                glowing line at the bottom. The contrast between the bright
+                light seeping through and the pitch-black interior. The
+                mint-colored door occupies most of the frame. Strong contrast
+                and stark lighting. Documentary realism, grainy film texture,
+                high contrast, deep focus. Eerie, claustrophobic atmosphere.
+                Korean apartment interior setting. Stark black and white tones.
+                The unsettling detail of a few hair strands and light creeping
+                under a closed door.
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_3.png"
+                  alt="scene 4"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>
+                <img
+                  src="./images/thumb/_4.png"
+                  alt="scene 5"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                벽에 비치는 그림자
+              </td>
+              <td>
+                A black and white documentary-style photograph. Deep depth of
+                field. Full shot of a narrow alley wall in a Korean urban
+                setting at dawn. Dim, low morning light casting long shadows. A
+                large, disturbing shadow is cast on the wall - the shadow
+                appears to be of someone walking by with a long cloth or fabric
+                draped over their entire body and head, the cloth extending all
+                the way down to drag on the ground. The shadow shows the long,
+                trailing fabric creating an eerie, elongated silhouette. The
+                shadow form is obscured and featureless, like a figure
+                completely shrouded in a floor-length cloth passing through the
+                alley. The outline is vague and deeply unsettling, making it
+                impossible to determine any human features or gender. On the
+                wall, there are just a few simple potted plants. The shadow's
+                source is not visible in the frame. The entire alley scene
+                captured in the dim, gray light of early morning. Soft, diffused
+                lighting of dawn, not harsh daylight. Documentary realism,
+                grainy film texture, high contrast, deep focus. Korean urban
+                alley atmosphere at dawn. Stark black and white tones with gray
+                morning ambiance. Ghostly shadow of a figure draped in long,
+                ground-dragging cloth in the quiet, early morning setting.
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_4.png"
+                  alt="scene 5"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>
+                <img
+                  src="./images/thumb/_5.png"
+                  alt="scene 6"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                아파트 그림자 극장
+              </td>
+              <td>
+                A black and white documentary-style photograph. Deep depth of
+                field. Extreme long shot of an apartment building facade at
+                night. Multiple windows arranged in a grid pattern, all dark and
+                unlit except for one single illuminated window. In that one lit
+                window, a silhouette of someone appears to be doing dishes or
+                standing at a kitchen sink. The contrast between the single
+                bright window and all the surrounding dark windows creates an
+                isolated, lonely atmosphere. The figure in the window is small
+                and distant due to the extreme long shot. The building appears
+                to be a typical Korean apartment complex. Documentary realism,
+                grainy film texture, high contrast, deep focus. Urban nighttime
+                atmosphere. Stark black and white tones. The eerie feeling of
+                being watched or watching the only sign of life in an otherwise
+                dark building.
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_5.png"
+                  alt="scene 6"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>
+                <img
+                  src="./images/thumb/_6.png"
+                  alt="scene 7"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                쓰레기더미들
+              </td>
+              <td>
+                Abandoned garbage bags under a street lamp at night, sketchy pen
+                drawing style, crosshatching technique, dramatic shadows, blue
+                and black ink illustration, minimalist composition, melancholic
+                atmosphere, urban scene, heavy contrast between light and dark,
+                hand-drawn aesthetic, editorial illustration style --ar 16:9
+                --style raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_6.png"
+                  alt="scene 7"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>
+                <img
+                  src="./images/thumb/_7.png"
+                  alt="scene 8"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                목이 없는 마네킹
+              </td>
+              <td>
+                Empty dark street at night, full shot composition, storefront
+                display window, headless footless mannequins with only neck
+                torso and legs, no heads no feet, bare mannequin bodies, three
+                incomplete body forms, shoes placed below mannequins on floor,
+                empty shoes beneath each figure, car headlights reflecting on
+                window glass, light trails from passing cars mirrored on display
+                window, deserted urban street, dim lighting, eerie atmosphere,
+                Mario Giacomelli style black and white photography, high
+                contrast, grainy film texture, haunting mood --ar 16:9 --style
+                raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_7.png"
+                  alt="scene 8"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>
+                <img
+                  src="./images/thumb/_8.png"
+                  alt="scene 9"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                역광의 사람들
+              </td>
+              <td>
+                Dusk street dramatic backlight, silhouetted figures Mario
+                Giacomelli style, shadow-like people passing on both sides,
+                elongated shadows, all architecture in black, monochrome scene,
+                pedestrians as pure silhouettes, explosive backlight rays,
+                buildings dark masses, stark contrast black and white, poetic
+                urban scene, heavy grain texture, emotional depth --ar 16:9
+                --stylize 250
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_8.png"
+                  alt="scene 9"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>
+                <img
+                  src="./images/thumb/_9.png"
+                  alt="scene 10"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                손으로 걷기
+              </td>
+              <td>
+                Horror film scene extreme close up, hand descending stairs in
+                reverse crab walk position, body bent backwards, unnatural
+                posture, inverted descent, fingers clawing down staircase,
+                disturbing hand detail, Mario Giacomelli aesthetic, black and
+                white, rough grainy texture, stark shadows, unsettling mood,
+                nightmarish quality, contorted movement --ar 16:9 --stylize 200
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_9.png"
+                  alt="scene 10"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>
+                <img
+                  src="./images/thumb/_10.png"
+                  alt="scene 11"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                틈으로 걷기
+              </td>
+              <td>
+                Long shot narrow alleyway, shadowy figure moving through
+                passage, person rendered as pure silhouette, dark shadow passing
+                between buildings, tight urban space, walls on both sides,
+                Giacomelli inspired monochrome, extreme contrast black and
+                white, rough sketchy texture, heavy grain, mysterious presence,
+                architectural corridor, intimate urban scene --ar 16:9 --style
+                raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_10.png"
+                  alt="scene 11"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>
+                <img
+                  src="./images/thumb/_11.png"
+                  alt="scene 12"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                그림자 걷기
+              </td>
+              <td>
+                Close up shot of person's shadow on alley wall, human silhouette
+                shadow only, no person visible, shadow cast between buildings,
+                narrow alley corner, wall and ground visible, Mario Giacomelli
+                style black and white photography, high contrast, heavy
+                crosshatching texture, rough grain structure, stark shadows,
+                architectural geometry, mysterious presence, grainy film
+                aesthetic, dramatic lighting
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_11.png"
+                  alt="scene 12"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td>
+                <img
+                  src="./images/thumb/_12.png"
+                  alt="scene 13"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                검은 고양이
+              </td>
+              <td>
+                Startled black cat at night, direct confrontation moment, scared
+                cat facing camera, eyes wide, cat illuminated by light source,
+                radiating light beams around cat, dramatic backlight, Mario
+                Giacomelli style black and white photography, high contrast,
+                heavy crosshatching texture, rough grain structure, stark
+                shadows, shocked cat expression, intense eye contact, grainy
+                film aesthetic, dramatic moment
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_12.png"
+                  alt="scene 13"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td>
+                <img
+                  src="./images/thumb/_13.png"
+                  alt="scene 14"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                움직이는 그네
+              </td>
+              <td>
+                Extreme close up of empty swing swaying at night, no person,
+                swing seat and chains in tight frame, abandoned playground swing
+                in motion, swing moving by itself, deserted playground, eerie
+                atmosphere, Mario Giacomelli style black and white photography,
+                high contrast, heavy crosshatching texture, rough grain
+                structure, stark shadows, swing chains visible, mysterious
+                movement, grainy film aesthetic, dramatic lighting, haunting
+                mood --ar 16:9 --style raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_13.png"
+                  alt="scene 14"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td>
+                <img
+                  src="./images/thumb/_14.png"
+                  alt="scene 15"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                원형 미끄럼틀
+              </td>
+              <td>
+                Inside cylindrical playground slide tunnel, circular tube
+                interior, holes visible in slide walls, cylinder seams and
+                joints visible, rivets and connection points, industrial tube
+                interior, Mario Giacomelli style black and white photography,
+                high contrast, heavy crosshatching texture, rough grain
+                structure, stark shadows, mechanical details, tunnel
+                perspective, grainy film aesthetic, dramatic lighting,
+                mysterious atmosphere
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_14.png"
+                  alt="scene 15"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>16</td>
+              <td>
+                <img
+                  src="./images/thumb/_15.png"
+                  alt="scene 16"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                출구
+              </td>
+              <td>
+                Inside children's short plastic slide tunnel, kids playground
+                slide interior, quickly curving small tube, sharp bend visible,
+                curved plastic tunnel for toddlers, short slide bending
+                immediately, compact plastic tube interior perspective, Mario
+                Giacomelli style black and white photography, high contrast,
+                heavy crosshatching texture, rough grain structure, stark
+                shadows, curved tunnel vision, tight curve, grainy film
+                aesthetic, dramatic lighting, mysterious atmosphere
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_15.png"
+                  alt="scene 16"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>17</td>
+              <td>
+                <img
+                  src="./images/thumb/_16.png"
+                  alt="scene 17"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                끝없는 손
+              </td>
+              <td>
+                Korean apartment elevator mirror reflection, arm only visible,
+                hand waving hello, arm raised in greeting gesture, sleeveless
+                arm, no body visible, only arm and hand in frame, arm greeting
+                gesture infinitely reflected in mirrors, Korean apartment lift
+                interior, standard Korean residential elevator, hand waving
+                multiplying endlessly, parallel mirrors creating endless
+                reflections, arm repeating in mirror tunnel, Mario Giacomelli
+                style black and white photography, high contrast, heavy
+                crosshatching texture, rough grain structure, stark shadows,
+                infinite regression, surreal atmosphere
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_16.png"
+                  alt="scene 17"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>18</td>
+              <td>
+                <img
+                  src="./images/thumb/_17.png"
+                  alt="scene 18"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                꿈속에서 들은 말
+              </td>
+              <td>
+                Extreme close up side profile mannequin, smooth featureless head
+                like display mannequin, completely blank face, faceless
+                mannequin bust head talking from side, smooth surface with zero
+                features, no facial details at all, mannequin speaking with
+                entirely smooth blank face from profile view, clean featureless
+                surface, strong backlight illuminating from behind, dramatic
+                backlighting, side profile speaking gesture, ECU side angle,
+                Giacomelli inspired monochrome, extreme contrast black and
+                white, rough sketchy texture, heavy grain --ar 16:9 --style raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_17.png"
+                  alt="scene 18"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>19</td>
+              <td>
+                <img
+                  src="./images/thumb/_18.png"
+                  alt="scene 19"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                눈빛
+              </td>
+              <td>
+                Extreme closeup shot, only eyes visible in darkness, Rembrandt
+                lighting on eyes only, face hidden in deep shadow, just eyes
+                illuminated by small light source, rest of face engulfed in
+                darkness, dramatic eye-level gaze, eyes staring intensely lit by
+                single light, face obscured in black shadow except eyes,
+                dramatic chiaroscuro lighting, eyes emerging from darkness,
+                monochrome, extreme contrast black and white, rough sketchy
+                texture, heavy grain, mysterious face in shadow, only eyes
+                exposed to light, intense eye contact, deep blacks --ar 16:9
+                --style raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_18.png"
+                  alt="scene 19"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>20</td>
+              <td>
+                <img
+                  src="./images/thumb/_19.png"
+                  alt="scene 20"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                눈동자
+              </td>
+              <td>
+                Extreme close up of single eyeball, iris and pupil extreme zoom,
+                eyeball macro shot, eye detail magnified, radiating lines from
+                pupil, explosive light rays bursting outward from center,
+                dramatic eye texture, Mario Giacomelli style black and white
+                photography, high contrast, heavy crosshatching texture, rough
+                grain structure, stark shadows, intense circular pattern,
+                concentric lines, grainy film aesthetic, dramatic lighting,
+                abstract eye composition
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_19.png"
+                  alt="scene 20"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>21</td>
+              <td>
+                <img
+                  src="./images/thumb/_20.png"
+                  alt="scene 21"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                파묻힌 귀
+              </td>
+              <td>
+                Top-down view human ear visible between fallen leaves, overhead
+                shot looking down, ear showing through autumn leaf coverage,
+                leaves scattered around ear, bird's eye perspective, ear peeking
+                from leaf litter, partially hidden ear among leaves, top view
+                composition, Mario Giacomelli aesthetic, stark black and white
+                photography, crosshatch drawing quality, extreme contrast, rough
+                grainy texture, dramatic shadows, surreal scene from above --ar
+                16:9 --profile s5zwrxo --stylize 250 --draft
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_20.png"
+                  alt="scene 21"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>22</td>
+              <td>
+                <img
+                  src="./images/thumb/_21.png"
+                  alt="scene 22"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                손잡는 그림자
+              </td>
+              <td>
+                Hands clasped together in darkness, shadow-like hands holding
+                each other, hands grasping in dark, silhouette hands
+                intertwined, hands meeting in shadow, dark shadowy hands joined
+                together, hands holding in deep darkness, Mario Giacomelli style
+                black and white photography, high contrast, heavy crosshatching
+                texture, rough grain structure, stark shadows, mysterious hand
+                gesture, grainy film aesthetic, dramatic low-key lighting,
+                somber atmosphere --ar 16:9 --style raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_21.png"
+                  alt="scene 22"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>23</td>
+              <td>
+                <img
+                  src="./images/thumb/_22.png"
+                  alt="scene 23"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                검은 주름
+              </td>
+              <td>
+                Nearly flat thin fabric with subtle gentle movements, almost
+                flat sheer cloth with slight wrinkles, mostly flat textile with
+                minimal undulation, barely moving fabric surface, delicate cloth
+                nearly flat with small wave-like creases, subtle ripples on flat
+                fabric, gentle minimal fabric movement, slight folds on flat
+                surface, thin material almost still with tiny movements, Mario
+                Giacomelli style black and white photography, high contrast,
+                heavy crosshatching texture, rough grain structure, stark
+                shadows, minimalist fabric composition, grainy film aesthetic,
+                subtle dramatic lighting
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_22.png"
+                  alt="scene 23"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>24</td>
+              <td>
+                <img
+                  src="./images/thumb/_23.png"
+                  alt="scene 24"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                비둘기의 눈동자
+              </td>
+              <td>
+                Extreme close up of pigeon eye, bird eye magnified, pigeon eye
+                macro shot, eye detail extreme zoom, radiating lines bursting
+                outward from eye, explosive light rays from center, dramatic eye
+                texture, circular pattern, pigeon eye filling frame, Mario
+                Giacomelli style black and white photography, high contrast,
+                heavy crosshatching texture, rough grain structure, stark
+                shadows, intense circular radiating pattern, grainy film
+                aesthetic, dramatic lighting, abstract eye composition
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_23.png"
+                  alt="scene 24"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>25</td>
+              <td>
+                <img
+                  src="./images/thumb/_24.png"
+                  alt="scene 25"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                비둘기 발
+              </td>
+              <td>
+                Close up of single pigeon leg from side view, one bird leg
+                magnified side angle, single pigeon foot detail side profile,
+                side view close-up one bird claw, one pigeon leg on ground from
+                side, side angle detailed single pigeon foot texture, one bird
+                talon side view, single foot and leg of pigeon side profile
+                only, Mario Giacomelli style black and white photography, high
+                contrast, heavy crosshatching texture, rough grain structure,
+                stark shadows, side view single bird leg composition, grainy
+                film aesthetic, dramatic lighting
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_24.png"
+                  alt="scene 25"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>26</td>
+              <td>
+                <img
+                  src="./images/thumb/_25.png"
+                  alt="scene 26"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                도마뱀의 꼬리
+              </td>
+              <td>
+                Close up only severed lizard tail on grass, just cut-off tail
+                alone lying on grassland, tail only abandoned on grass, only
+                severed tail without body on grassy surface, just tail in grass
+                field, lizard tail alone detail on grass blades, only cut tail
+                remaining on meadow, nothing but tail left behind, tail by
+                itself, Giacomelli inspired monochrome, extreme contrast black
+                and white, rough sketchy texture, heavy grain, solitary tail
+                only composition, dramatic shadows on grass
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_25.png"
+                  alt="scene 26"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>27</td>
+              <td>
+                <img
+                  src="./images/thumb/_26.png"
+                  alt="scene 27"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                열쇠구멍
+              </td>
+              <td>
+                Keyhole close up, key hole detail, circular keyhole opening,
+                door keyhole view, keyhole perspective, looking at keyhole,
+                keyhole on door or surface, round keyhole shape, Mario
+                Giacomelli style black and white photography, high contrast,
+                heavy crosshatching texture, rough grain structure, stark
+                shadows, dramatic keyhole composition, grainy film aesthetic,
+                mysterious lighting, voyeuristic perspective --ar 16:9 --style
+                raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_26.png"
+                  alt="scene 27"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>28</td>
+              <td>
+                <img
+                  src="./images/thumb/_27.png"
+                  alt="scene 28"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                놀이터
+              </td>
+              <td>
+                Playground sandbox with bodies partially buried in sand, feet
+                and hands arm emerging from sand, limbs sticking out of sandbox,
+                only hand arm and foot leg visible in sand, bodies mostly buried
+                with limbs protruding, partial body parts in playground sand,
+                arm and leg emerging from sand surface, hands and feet showing
+                from buried bodies, Giacomelli inspired monochrome, extreme
+                contrast black and white, rough sketchy texture, heavy grain,
+                unsettling playground sandbox scene, dramatic shadows on sand
+                without heads
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_27.png"
+                  alt="scene 28"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>29</td>
+              <td>
+                <img
+                  src="./images/thumb/_28.png"
+                  alt="scene 29"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                매달린 손
+              </td>
+              <td>
+                extreme close up of two gloved hands gripping horizontal bar,
+                workout gloves on pull-up bar, tight grip on metal bar, hand
+                detail magnified, finger and glove texture, Mario Giacomelli
+                style black and white photography, high contrast, heavy
+                crosshatching texture, rough grain structure, stark dramatic
+                shadows, grainy film aesthetic, abstract composition, deep
+                blacks and bright whites, textured glove surface, tension in
+                grip, cinematic lighting --ar 16:9 --style raw
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_28.png"
+                  alt="scene 29"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>30</td>
+              <td>
+                <img
+                  src="./images/thumb/_29.png"
+                  alt="scene 30"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2.5);
+                  "
+                /><br />
+                널린 다리
+              </td>
+              <td>
+                pants with feet hanging on horizontal bar, trousers with legs
+                and feet draped over pull-up bar, empty pants hanging from iron
+                bar, legs of pants with feet attached suspended, surreal
+                clothing on workout bar, Mario Giacomelli style black and white
+                photography, high contrast, heavy crosshatching texture, rough
+                grain structure, stark dramatic shadows, grainy film aesthetic,
+                abstract surreal composition, deep blacks and bright whites,
+                fabric texture detail, cinematic lighting
+              </td>
+              <td>
+                <img
+                  src="./images/prompt/_29.png"
+                  alt="scene 30"
+                  style="
+                    width: 6rem;
+                    height: 8rem;
+                    object-fit: cover;
+                    object-position: center;
+                    transform: scale(2);
+                  "
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 푸터 섹션 -->
+    <footer class="footer-section">
+      <p>
+        &copy; <span id="currentYear"></span>
+        <a
+          href="https://instagram.com/suhyouri"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="color: #fff; text-decoration: none"
+          >Suh Youri</a
+        >. All rights reserved.
+      </p>
+    </footer>
+
+    <script>
+      // 현재 연도 자동 설정
+      document.getElementById("currentYear").textContent =
+        new Date().getFullYear();
+
+      let mediaFiles = [];
+      let currentMediaIndex = 0;
+      let heroVideoElement = null;
+      const heroSection = document.getElementById("heroSection");
+
+      // 눈 깜빡임 감지 변수
+      const videoElement = document.getElementById("webcam");
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const blinkThreshold = 0.21; // EAR 임계값
+      let isBlinking = false;
+      let blinkCooldown = false;
+
+      // GitHub Pages용: files.json에서 파일 목록 가져오기
+      async function loadMediaFiles() {
+        try {
+          const response = await fetch("files.json");
+          const files = await response.json();
+
+          // 이미지 파일 매핑
+          mediaFiles = files.map((filename) => ({
+            type: "image",
+            src: `images/${filename}`,
+          }));
+
+          console.log(
+            `✅ ${mediaFiles.length}개의 이미지 파일을 로드했습니다.`
+          );
+
+          // 파일 로드 후 초기 이미지 설정
+          if (mediaFiles.length > 0) {
+            changeMedia();
+          } else {
+            console.warn("⚠️ images 폴더에 이미지 파일이 없습니다.");
+          }
+        } catch (error) {
+          console.error("❌ 파일 목록을 가져오는데 실패했습니다:", error);
+          console.log("💡 files.json 파일이 있는지 확인하세요.");
+        }
+      }
+
+      // 이미지 전환 함수
+      function changeMedia() {
+        if (mediaFiles.length === 0) return;
+
+        // 랜덤 인덱스 선택 (현재와 다른 것)
+        let newIndex;
+        do {
+          newIndex = Math.floor(Math.random() * mediaFiles.length);
+        } while (newIndex === currentMediaIndex && mediaFiles.length > 1);
+
+        currentMediaIndex = newIndex;
+        const media = mediaFiles[currentMediaIndex];
+
+        // 기존 비디오 엘리먼트 제거 (혹시 있다면)
+        if (heroVideoElement) {
+          heroVideoElement.remove();
+          heroVideoElement = null;
+        }
+
+        // 이미지 배경 설정
+        const style = document.createElement("style");
+        style.id = "hero-background-style";
+
+        // 기존 스타일 제거
+        const oldStyle = document.getElementById("hero-background-style");
+        if (oldStyle) oldStyle.remove();
+
+        style.textContent = `
+            #heroSection::before {
+              background-image: url('${media.src}');
+            }
+          `;
+        document.head.appendChild(style);
+      }
+
+      // Eye Aspect Ratio (EAR) 계산
+      // EAR = (|p2 - p6| + |p3 - p5|) / (2 * |p1 - p4|)
+      function calculateEAR(eyeLandmarks) {
+        // Vertical distances
+        const v1 = distance(eyeLandmarks[1], eyeLandmarks[5]);
+        const v2 = distance(eyeLandmarks[2], eyeLandmarks[4]);
+        // Horizontal distance
+        const h = distance(eyeLandmarks[0], eyeLandmarks[3]);
+
+        if (h === 0) return 0;
+        return (v1 + v2) / (2.0 * h);
+      }
+
+      function distance(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+      }
+
+      function onResults(results) {
+        // Hide loading overlay once we have results (tracking started)
+        if (loadingOverlay.style.opacity !== "0") {
+          loadingOverlay.style.opacity = "0";
+          setTimeout(() => {
+            loadingOverlay.style.display = "none";
+          }, 500);
+        }
+
+        if (
+          results.multiFaceLandmarks &&
+          results.multiFaceLandmarks.length > 0
+        ) {
+          const landmarks = results.multiFaceLandmarks[0];
+
+          // MediaPipe Face Mesh Indices
+          // Left Eye: 33, 160, 158, 133, 153, 144
+          // Right Eye: 362, 385, 387, 263, 373, 380
+          const leftEyeIndices = [33, 160, 158, 133, 153, 144];
+          const rightEyeIndices = [362, 385, 387, 263, 373, 380];
+
+          const leftEye = leftEyeIndices.map((index) => landmarks[index]);
+          const rightEye = rightEyeIndices.map((index) => landmarks[index]);
+
+          const leftEAR = calculateEAR(leftEye);
+          const rightEAR = calculateEAR(rightEye);
+          const avgEAR = (leftEAR + rightEAR) / 2;
+
+          // Blink detection logic
+          if (avgEAR < blinkThreshold) {
+            if (!isBlinking && !blinkCooldown) {
+              isBlinking = true;
+              console.log("👁️ 깜빡임 감지! EAR:", avgEAR);
+              changeMedia(); // 이미지 전환
+
+              // Cooldown to prevent rapid switching on a single long blink
+              blinkCooldown = true;
+              setTimeout(() => {
+                blinkCooldown = false;
+              }, 1000); // 1초 쿨다운
+            }
+          } else {
+            isBlinking = false;
+          }
+        }
+      }
+
+      // MediaPipe Face Mesh 초기화
+      function initFaceMesh() {
+        const faceMesh = new FaceMesh({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+          },
+        });
+
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        faceMesh.onResults(onResults);
+
+        const camera = new Camera(videoElement, {
+          onFrame: async () => {
+            await faceMesh.send({ image: videoElement });
+          },
+          width: 640,
+          height: 480,
+        });
+
+        camera.start();
+      }
+
+      // 페이지 로드 시 실행
+      loadMediaFiles();
+
+      // 웹캠 및 Face Mesh 초기화
+      if (typeof FaceMesh !== "undefined" && typeof Camera !== "undefined") {
+        initFaceMesh();
+      } else {
+        console.error("MediaPipe 라이브러리를 로드할 수 없습니다.");
+        loadingOverlay.textContent = "❌ 웹캠 초기화 실패";
+      }
+
+      // 촛불 효과 - 기획의도 섹션
+      const planningSection = document.querySelector(".planning-section");
+
+      // 모바일 터치 이벤트 추가
+      planningSection.addEventListener("touchmove", function (e) {
+        const touch = e.touches[0];
+        const rect = this.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        this.style.setProperty("--cursor-x", x + "px");
+        this.style.setProperty("--cursor-y", y + "px");
+      });
+
+      planningSection.addEventListener("mousemove", function (e) {
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        this.style.setProperty("--cursor-x", x + "px");
+        this.style.setProperty("--cursor-y", y + "px");
+      });
+
+      // 반딧불이 애니메이션
+      function animateFirefly(fireflyId, sectionSelector) {
+        const firefly = document.getElementById(fireflyId);
+        const section = document.querySelector(sectionSelector);
+
+        function moveFirefly() {
+          const sectionRect = section.getBoundingClientRect();
+          const sectionWidth = sectionRect.width;
+          const sectionHeight = sectionRect.height;
+
+          // 랜덤 시작 위치
+          const startX = Math.random() * (sectionWidth - 100);
+          const startY = Math.random() * (sectionHeight - 100);
+
+          // 랜덤 끝 위치 (더 넓은 범위)
+          const endX = Math.random() * (sectionWidth - 100);
+          const endY = Math.random() * (sectionHeight - 100);
+
+          // 더 긴 시간 (20-40초)
+          const duration = 20 + Math.random() * 20;
+
+          firefly.style.left = startX + "px";
+          firefly.style.top = startY + "px";
+
+          // 곡선 경로를 위한 중간 지점들
+          const midX1 = startX + (Math.random() - 0.5) * 300;
+          const midY1 = startY + (Math.random() - 0.5) * 300;
+          const midX2 = endX + (Math.random() - 0.5) * 300;
+          const midY2 = endY + (Math.random() - 0.5) * 300;
+
+          // CSS 애니메이션 커스터마이즈
+          firefly.style.animation = "none";
+          firefly.offsetHeight; // 리플로우 트리거
+
+          // 동적으로 keyframes 생성 (곡선 경로)
+          const animationName = `firefly-float-${fireflyId}-${Date.now()}`;
+          const styleSheet = document.createElement("style");
+          styleSheet.id = `style-${fireflyId}`;
+          styleSheet.textContent = `
+              @keyframes ${animationName} {
+                0% {
+                  transform: translate(0, 0);
+                  opacity: 0;
+                }
+                5% {
+                  opacity: 0.8;
+                }
+                25% {
+                  transform: translate(${midX1 - startX}px, ${
+            midY1 - startY
+          }px);
+                  opacity: 1;
+                }
+                50% {
+                  transform: translate(${(endX - startX) * 0.5}px, ${
+            (endY - startY) * 0.5
+          }px);
+                  opacity: 1;
+                }
+                75% {
+                  transform: translate(${midX2 - startX}px, ${
+            midY2 - startY
+          }px);
+                  opacity: 1;
+                }
+                95% {
+                  opacity: 0.8;
+                }
+                100% {
+                  transform: translate(${endX - startX}px, ${endY - startY}px);
+                  opacity: 0;
+                }
+              }
+            `;
+
+          // 기존 스타일 제거
+          const oldStyle = document.getElementById(`style-${fireflyId}`);
+          if (oldStyle) {
+            document.head.removeChild(oldStyle);
+          }
+
+          document.head.appendChild(styleSheet);
+
+          firefly.style.animation = `${animationName} ${duration}s ease-in-out`;
+
+          // 애니메이션 끝나면 다시 시작
+          setTimeout(() => {
+            moveFirefly();
+          }, duration * 1000);
+        }
+
+        moveFirefly();
+      }
+
+      // 반딧불이 시작 (스토리보드 섹션 - 5마리)
+      animateFirefly("firefly1", ".storyboard-section");
+
+      // 각 반딧불이마다 다른 시작 시간으로 자연스럽게
+      setTimeout(() => {
+        animateFirefly("firefly2", ".storyboard-section");
+      }, 2000);
+
+      setTimeout(() => {
+        animateFirefly("firefly3", ".storyboard-section");
+      }, 4000);
+
+      setTimeout(() => {
+        animateFirefly("firefly4", ".storyboard-section");
+      }, 6000);
+
+      setTimeout(() => {
+        animateFirefly("firefly5", ".storyboard-section");
+      }, 8000);
+
+      // 영상 자동 재생
+      const videoWrapper = document.getElementById("videoWrapper");
+      const video = document.getElementById("projectVideo");
+      const overlay = document.getElementById("videoOverlay");
+
+      // 페이지 로드 시 비디오 재생 및 오버레이 숨김
+      video
+        .play()
+        .then(() => {
+          overlay.classList.add("hidden");
+        })
+        .catch((error) => {
+          console.log("자동 재생 실패:", error);
+        });
+
+      videoWrapper.addEventListener("mouseenter", () => {
+        video.play();
+        overlay.classList.add("hidden");
+      });
+
+      // 터치 디바이스를 위한 클릭 이벤트
+      videoWrapper.addEventListener("click", () => {
+        if (video.paused) {
+          video.play();
+          overlay.classList.add("hidden");
+        } else {
+          video.pause();
+          overlay.classList.remove("hidden");
+        }
+      });
+
+      // 촛불 효과 - 기획의도 섹션과 작업노트 섹션
+      const planningSections = document.querySelectorAll(
+        ".planning-section, .commentary-section"
+      );
+
+      planningSections.forEach((section) => {
+        // 모바일 터치 이벤트 추가
+        section.addEventListener("touchmove", function (e) {
+          const touch = e.touches[0];
+          const rect = this.getBoundingClientRect();
+          const x = touch.clientX - rect.left;
+          const y = touch.clientY - rect.top;
+
+          this.style.setProperty("--cursor-x", x + "px");
+          this.style.setProperty("--cursor-y", y + "px");
+        });
+
+        section.addEventListener("mousemove", function (e) {
+          const rect = this.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          this.style.setProperty("--cursor-x", x + "px");
+          this.style.setProperty("--cursor-y", y + "px");
+        });
+      });
+
+      // 작업노트 섹션의 커서 추적
+      // const commentarySection = document.querySelector(".commentary-section");
+      // let cursorX = 0;
+      // let cursorY = 0;
+
+      // commentarySection.addEventListener("mousemove", function (e) {
+      //   const rect = this.getBoundingClientRect();
+      //   cursorX = e.clientX - rect.left;
+      //   cursorY = e.clientY - rect.top;
+      // });
+
+      // // 모바일 터치 추적
+      // commentarySection.addEventListener("touchmove", function (e) {
+      //   const touch = e.touches[0];
+      //   const rect = this.getBoundingClientRect();
+      //   cursorX = touch.clientX - rect.left;
+      //   cursorY = touch.clientY - rect.top;
+      // });
+
+      // 어두운 반딧불이 애니메이션 (텍스트를 가리는 검은 원)
+      function animateDarkFirefly(fireflyId, sectionSelector) {
+        const firefly = document.getElementById(fireflyId);
+        const section = document.querySelector(sectionSelector);
+
+        function moveFirefly() {
+          const sectionRect = section.getBoundingClientRect();
+          const sectionWidth = sectionRect.width;
+          const sectionHeight = sectionRect.height;
+
+          // 랜덤 시작 위치
+          const startX = Math.random() * sectionWidth;
+          const startY = Math.random() * sectionHeight;
+
+          // 랜덤 끝 위치
+          const endX = Math.random() * sectionWidth;
+          const endY = Math.random() * sectionHeight;
+
+          // 더 긴 시간 (15-30초)
+          const duration = 15 + Math.random() * 15;
+
+          firefly.style.left = startX + "px";
+          firefly.style.top = startY + "px";
+
+          // 곡선 경로를 위한 중간 지점들
+          const midX1 = startX + (Math.random() - 0.5) * 200;
+          const midY1 = startY + (Math.random() - 0.5) * 200;
+          const midX2 = endX + (Math.random() - 0.5) * 200;
+          const midY2 = endY + (Math.random() - 0.5) * 200;
+
+          // CSS 애니메이션 커스터마이즈
+          firefly.style.animation = "none";
+          firefly.offsetHeight; // 리플로우 트리거
+
+          // 동적으로 keyframes 생성 (곡선 경로)
+          const animationName = `dark-firefly-float-${fireflyId}-${Date.now()}`;
+          const styleSheet = document.createElement("style");
+          styleSheet.id = `style-${fireflyId}`;
+          styleSheet.textContent = `
+        @keyframes ${animationName} {
+          0% {
+            transform: translate(0, 0);
+            opacity: 0;
+          }
+          5% {
+            opacity: 0.8;
+          }
+          25% {
+            transform: translate(${midX1 - startX}px, ${midY1 - startY}px);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(${(endX - startX) * 0.5}px, ${
+            (endY - startY) * 0.5
+          }px);
+            opacity: 1;
+          }
+          75% {
+            transform: translate(${midX2 - startX}px, ${midY2 - startY}px);
+            opacity: 1;
+          }
+          95% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(${endX - startX}px, ${endY - startY}px);
+            opacity: 0;
+          }
+        }
+      `;
+
+          // 기존 스타일 제거
+          const oldStyle = document.getElementById(`style-${fireflyId}`);
+          if (oldStyle) {
+            document.head.removeChild(oldStyle);
+          }
+
+          document.head.appendChild(styleSheet);
+
+          firefly.style.animation = `${animationName} ${duration}s ease-in-out`;
+
+          // 애니메이션 끝나면 다시 시작
+          setTimeout(() => {
+            moveFirefly();
+          }, duration * 1000);
+        }
+
+        moveFirefly();
+      }
+
+      // 어두운 반딧불이 시작 (작업노트 섹션 - 5마리)
+      animateDarkFirefly("firefly-dark1", ".commentary-section");
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark2", ".commentary-section");
+      }, 2000);
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark3", ".commentary-section");
+      }, 4000);
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark4", ".commentary-section");
+      }, 6000);
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark5", ".commentary-section");
+      }, 8000);
+
+      // 어두운 반딧불이 애니메이션 (커서를 피하는 버전)
+      function animateDarkFirefly(fireflyId, sectionSelector) {
+        const firefly = document.getElementById(fireflyId);
+        const section = document.querySelector(sectionSelector);
+        let currentX = 0;
+        let currentY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        let isMoving = false;
+
+        function moveFirefly() {
+          const sectionRect = section.getBoundingClientRect();
+          const sectionWidth = sectionRect.width;
+          const sectionHeight = sectionRect.height;
+
+          // 랜덤 목표 위치
+          targetX = Math.random() * sectionWidth;
+          targetY = Math.random() * sectionHeight;
+
+          currentX = targetX;
+          currentY = targetY;
+
+          firefly.style.left = currentX + "px";
+          firefly.style.top = currentY + "px";
+
+          // 더 긴 시간 (15-30초)
+          const duration = 15 + Math.random() * 15;
+
+          // 목표 위치 계산
+          const endX = Math.random() * sectionWidth;
+          const endY = Math.random() * sectionHeight;
+
+          // 곡선 경로를 위한 중간 지점들
+          const midX1 = currentX + (Math.random() - 0.5) * 200;
+          const midY1 = currentY + (Math.random() - 0.5) * 200;
+          const midX2 = endX + (Math.random() - 0.5) * 200;
+          const midY2 = endY + (Math.random() - 0.5) * 200;
+
+          // CSS 애니메이션 커스터마이즈
+          firefly.style.animation = "none";
+          firefly.offsetHeight;
+
+          const animationName = `dark-firefly-float-${fireflyId}-${Date.now()}`;
+          const styleSheet = document.createElement("style");
+          styleSheet.id = `style-${fireflyId}`;
+          styleSheet.textContent = `
+        @keyframes ${animationName} {
+          0% {
+            transform: translate(0, 0);
+            opacity: 0;
+          }
+          5% {
+            opacity: 0.8;
+          }
+          25% {
+            transform: translate(${midX1 - currentX}px, ${midY1 - currentY}px);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(${(endX - currentX) * 0.5}px, ${
+            (endY - currentY) * 0.5
+          }px);
+            opacity: 1;
+          }
+          75% {
+            transform: translate(${midX2 - currentX}px, ${midY2 - currentY}px);
+            opacity: 1;
+          }
+          95% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(${endX - currentX}px, ${endY - currentY}px);
+            opacity: 0;
+          }
+        }
+      `;
+
+          const oldStyle = document.getElementById(`style-${fireflyId}`);
+          if (oldStyle) {
+            document.head.removeChild(oldStyle);
+          }
+
+          document.head.appendChild(styleSheet);
+
+          firefly.style.animation = `${animationName} ${duration}s ease-in-out`;
+
+          // 목표 위치 업데이트 (애니메이션 중간에)
+          targetX = endX;
+          targetY = endY;
+
+          setTimeout(() => {
+            moveFirefly();
+          }, duration * 1000);
+        }
+
+        // 커서 감지 및 도망 로직
+        function checkCursorProximity() {
+          const fireflyRect = firefly.getBoundingClientRect();
+          const sectionRect = section.getBoundingClientRect();
+
+          const fireflyX =
+            fireflyRect.left - sectionRect.left + fireflyRect.width / 2;
+          const fireflyY =
+            fireflyRect.top - sectionRect.top + fireflyRect.height / 2;
+
+          const distance = Math.sqrt(
+            Math.pow(cursorX - fireflyX, 2) + Math.pow(cursorY - fireflyY, 2)
+          );
+
+          const fleeDistance = 150; // 도망가기 시작하는 거리
+
+          if (distance < fleeDistance) {
+            // 커서 반대 방향으로 도망
+            const angle = Math.atan2(fireflyY - cursorY, fireflyX - cursorX);
+            const fleeX = Math.cos(angle) * 100; // 도망가는 거리
+            const fleeY = Math.sin(angle) * 100;
+
+            firefly.style.transform = `translate(${fleeX}px, ${fleeY}px)`;
+            firefly.style.transition = "transform 0.3s ease-out";
+          } else {
+            // 원래 위치로 돌아옴
+            firefly.style.transform = "translate(0, 0)";
+          }
+        }
+
+        // 지속적으로 커서 체크
+        setInterval(checkCursorProximity, 50);
+
+        moveFirefly();
+      }
+
+      // 어두운 반딧불이 시작 (작업노트 섹션 - 5마리)
+      animateDarkFirefly("firefly-dark1", ".commentary-section");
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark2", ".commentary-section");
+      }, 2000);
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark3", ".commentary-section");
+      }, 4000);
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark4", ".commentary-section");
+      }, 6000);
+
+      setTimeout(() => {
+        animateDarkFirefly("firefly-dark5", ".commentary-section");
+      }, 8000);
+    </script>
+  </body>
+</html>
